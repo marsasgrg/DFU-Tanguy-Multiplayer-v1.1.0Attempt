@@ -3,7 +3,7 @@
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 // Project:         Daggerfall Unity
-Copyright (C) 2009-2023 Daggerfall Workshop
+// Copyright (C) 2009-2023 Daggerfall Workshop
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Web Site:        http://www.dfworkshop.net
 // Contact:         Michael Rauter (a.k.a. Nystul)
