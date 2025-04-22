@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -11,16 +11,10 @@
 
 using UnityEngine;
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using DaggerfallConnect.Arena2;
-using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
 using DaggerfallWorkshop.Game.UserInterface;
-using DaggerfallWorkshop.Game.Entity;
-using DaggerfallWorkshop.Game.Items;
-using DaggerfallWorkshop.Game.Utility;
 
 namespace DaggerfallWorkshop.Game.UserInterfaceWindows
 {
@@ -48,7 +42,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         //protected HorizontalSlider weaponSensitivitySlider;
         protected Checkbox moveSpeedCheckbox;
         protected Checkbox invertMouseVerticalCheckbox;
-        protected Checkbox mouseSmoothingCheckbox;
+        protected HorizontalSlider mouseSmoothingSlider;
         protected HorizontalSlider weaponSwingModeSlider;
         protected Checkbox bowDrawbackCheckbox;
         protected Checkbox toggleSneakCheckbox;
@@ -102,13 +96,13 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             titleLabel = new TextLabel();
             titleLabel.ShadowPosition = Vector2.zero;
             titleLabel.Position = new Vector2(4, 4);
-            titleLabel.Text = "Configure Advanced Controls";
+            titleLabel.Text = TextManager.Instance.GetLocalizedText("configureAdvancedControls", TextCollections.TextSettings);
             titleLabel.HorizontalAlignment = HorizontalAlignment.Center;
             mainPanel.Components.Add(titleLabel);
 
             // Continue button
             continueButton = new Button();
-            continueButton.Label.Text = "CONTINUE";
+            continueButton.Label.Text = TextManager.Instance.GetLocalizedText("continueUpper", TextCollections.TextSettings);
             continueButton.Size = new Vector2(80, 10);
             continueButton.HorizontalAlignment = HorizontalAlignment.Right;
             continueButton.VerticalAlignment = VerticalAlignment.Bottom;
@@ -123,17 +117,16 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             SetupKeybindButton(quickSaveKeybindButton, InputManager.Actions.QuickSave, 210, 20);
             SetupKeybindButton(quickLoadKeybindButton, InputManager.Actions.QuickLoad, 210, 40);
 
-            mouseSensitivitySlider = CreateSlider("Mouse Look Sensitivity", 20, 70, 0.1f, 8.0f, DaggerfallUnity.Settings.MouseLookSensitivity);
-            invertMouseVerticalCheckbox = AddOption(20, 120, "Invert Look-Y", DaggerfallUnity.Settings.InvertMouseVertical);
-            mouseSmoothingCheckbox = AddOption(20, 130, "Mouse Smoothing", DaggerfallUnity.Settings.MouseLookSmoothing);
-            moveSpeedCheckbox = AddOption(20, 140, "Movement Acceleration", DaggerfallUnity.Settings.MovementAcceleration);
+            mouseSmoothingSlider = CreateSlider(TextManager.Instance.GetLocalizedText("mouseLookSmoothing", TextCollections.TextSettings), 150, 70, SettingsManager.GetMouseLookSmoothingStrength(DaggerfallUnity.Settings.MouseLookSmoothingFactor), TextManager.Instance.GetLocalizedTextList("mouseLookSmoothingStrengths", TextCollections.TextSettings));
+            mouseSensitivitySlider = CreateSlider(TextManager.Instance.GetLocalizedText("mouseLookSensitivity", TextCollections.TextSettings), 20, 70, 0.1f, 16.0f, DaggerfallUnity.Settings.MouseLookSensitivity);
+            invertMouseVerticalCheckbox = AddOption(20, 120, TextManager.Instance.GetLocalizedText("invertLookY", TextCollections.TextSettings), DaggerfallUnity.Settings.InvertMouseVertical);
+            moveSpeedCheckbox = AddOption(20, 130, TextManager.Instance.GetLocalizedText("movementAcceleration", TextCollections.TextSettings), DaggerfallUnity.Settings.MovementAcceleration);
 
-            //weaponSensitivitySlider = CreateSlider("Mouse Weapon Sensitivity", 115, 80, 0.1f, 10.0f, DaggerfallUnity.Settings.WeaponSensitivity);
-            weaponSwingModeSlider = CreateSlider("Weapon swing mode", 120, 70, DaggerfallUnity.Settings.WeaponSwingMode, "Vanilla", "Click", "Hold");
-            bowDrawbackCheckbox = AddOption(115, 130, "Bows - draw and release", DaggerfallUnity.Settings.BowDrawback);
-            toggleSneakCheckbox = AddOption(115, 140, "Toggle Sneak", DaggerfallUnity.Settings.ToggleSneak);
+            weaponSwingModeSlider = CreateSlider(TextManager.Instance.GetLocalizedText("weaponSwingMode", TextCollections.TextSettings), 150, 90, DaggerfallUnity.Settings.WeaponSwingMode, TextManager.Instance.GetLocalizedTextList("weaponSwingModes", TextCollections.TextSettings));
+            bowDrawbackCheckbox = AddOption(150, 120, TextManager.Instance.GetLocalizedText("bowDrawback", TextCollections.TextSettings), DaggerfallUnity.Settings.BowDrawback);
+            toggleSneakCheckbox = AddOption(150, 130, TextManager.Instance.GetLocalizedText("toggleSneak", TextCollections.TextSettings), DaggerfallUnity.Settings.ToggleSneak);
 
-            weaponAttackThresholdTextbox = AddTextbox("Mouse Weapon Attack Threshold", 20, 90, DaggerfallUnity.Settings.WeaponAttackThreshold.ToString());
+            weaponAttackThresholdTextbox = AddTextbox(TextManager.Instance.GetLocalizedText("mouseWeaponAttackThreshold", TextCollections.TextSettings), 20, 90, DaggerfallUnity.Settings.WeaponAttackThreshold.ToString());
 
             continueButton.OnMouseClick += ContinueButton_OnMouseClick;
 
@@ -188,13 +181,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             label.HorizontalAlignment = HorizontalAlignment.Right;
             label.VerticalAlignment = VerticalAlignment.Middle;
             label.ShadowPosition = Vector2.zero;
-
-            //"ToggleConsole" is too long as a word when looking in non-SDF font view
-            //"Screenshot" is a better word and is one letter less than "PrintScreen"
-            label.Text = action == InputManager.Actions.ToggleConsole ? "Console"
-                                   : action == InputManager.Actions.PrintScreen ? "Screenshot"
-                                   : action.ToString();
-
+            label.Text = TextManager.Instance.GetLocalizedText(action.ToString(), TextCollections.TextSettings);
             label.TextColor = DaggerfallUI.DaggerfallDefaultTextColor;
 
             button.Name = action.ToString();
@@ -358,10 +345,10 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         private void OnUpdateValues()
         {
             DaggerfallUnity.Settings.MouseLookSensitivity = mouseSensitivitySlider.GetValue();
+            DaggerfallUnity.Settings.MouseLookSmoothingFactor = SettingsManager.GetMouseLookSmoothingFactor(mouseSmoothingSlider.ScrollIndex);
             //DaggerfallUnity.Settings.WeaponSensitivity = weaponSensitivitySlider.GetValue();
             DaggerfallUnity.Settings.MovementAcceleration = moveSpeedCheckbox.IsChecked;
             DaggerfallUnity.Settings.InvertMouseVertical = invertMouseVerticalCheckbox.IsChecked;
-            DaggerfallUnity.Settings.MouseLookSmoothing = mouseSmoothingCheckbox.IsChecked;
             DaggerfallUnity.Settings.WeaponSwingMode = weaponSwingModeSlider.ScrollIndex;
             DaggerfallUnity.Settings.BowDrawback = bowDrawbackCheckbox.IsChecked;
             DaggerfallUnity.Settings.ToggleSneak = toggleSneakCheckbox.IsChecked;

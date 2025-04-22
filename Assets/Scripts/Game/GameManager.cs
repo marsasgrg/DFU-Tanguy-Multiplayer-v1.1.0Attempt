@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -625,6 +625,12 @@ namespace DaggerfallWorkshop.Game
                     DaggerfallUI.Instance.DaggerfallHUD.Enabled = true;
                     hudDisabledByPause = false;
                 }
+
+                // IME composition will break game input if still enabled once UI exits or game unpaused
+                // All windows that use IME restore composition state OnPop, but this tries to soft recover from
+                // cases where UI might have crashed or window failed to restore IME state on close
+                if (Input.imeCompositionMode == IMECompositionMode.On)
+                    Input.imeCompositionMode = IMECompositionMode.Auto;
             }
         }
 
@@ -681,10 +687,8 @@ namespace DaggerfallWorkshop.Game
             const float restingDistance = 12f;
 
             bool areEnemiesNearby = false;
-            DaggerfallEntityBehaviour[] entityBehaviours = FindObjectsOfType<DaggerfallEntityBehaviour>();
-            for (int i = 0; i < entityBehaviours.Length; i++)
+            foreach (DaggerfallEntityBehaviour entityBehaviour in ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
             {
-                DaggerfallEntityBehaviour entityBehaviour = entityBehaviours[i];
                 if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
                 {
                     EnemySenses enemySenses = entityBehaviour.GetComponent<EnemySenses>();
@@ -714,11 +718,10 @@ namespace DaggerfallWorkshop.Game
             }
 
             // Also check for enemy spawners that might emit an enemy
-            FoeSpawner[] spawners = FindObjectsOfType<FoeSpawner>();
-            for (int i = 0; i < spawners.Length; i++)
+            foreach (FoeSpawner spawner in ActiveGameObjectDatabase.GetActiveFoeSpawners())
             {
                 // Is a spawner inside min distance?
-                if (Vector3.Distance(spawners[i].transform.position, PlayerController.transform.position) < spawnDistance)
+                if (Vector3.Distance(spawner.transform.position, PlayerController.transform.position) < spawnDistance)
                 {
                     areEnemiesNearby = true;
                     break;
@@ -737,10 +740,8 @@ namespace DaggerfallWorkshop.Game
         public int HowManyEnemiesOfType(MobileTypes type, bool stopLookingIfFound = false, bool includingPacified = false)
         {
             int numberOfEnemies = 0;
-            DaggerfallEntityBehaviour[] entityBehaviours = FindObjectsOfType<DaggerfallEntityBehaviour>();
-            for (int i = 0; i < entityBehaviours.Length; i++)
-            {
-                DaggerfallEntityBehaviour entityBehaviour = entityBehaviours[i];
+            foreach (DaggerfallEntityBehaviour entityBehaviour in ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
+            { 
                 if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
                 {
                     EnemyEntity entity = entityBehaviour.Entity as EnemyEntity;
@@ -759,11 +760,10 @@ namespace DaggerfallWorkshop.Game
             }
 
             // Also check for enemy spawners that might emit an enemy
-            FoeSpawner[] spawners = FindObjectsOfType<FoeSpawner>();
-            for (int i = 0; i < spawners.Length; i++)
+            foreach (FoeSpawner spawner in ActiveGameObjectDatabase.GetActiveFoeSpawners())
             {
                 // Is a spawner inside min distance?
-                if (spawners[i].FoeType == type)
+                if (spawner.FoeType == type)
                 {
                     numberOfEnemies++;
                     if (stopLookingIfFound)
@@ -779,18 +779,12 @@ namespace DaggerfallWorkshop.Game
         /// </summary>
         public void ClearEnemies()
         {
-            DaggerfallEntityBehaviour[] entityBehaviours = FindObjectsOfType<DaggerfallEntityBehaviour>();
-            for (int i = 0; i < entityBehaviours.Length; i++)
-            {
-                DaggerfallEntityBehaviour entityBehaviour = entityBehaviours[i];
-                if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
-                    Destroy(entityBehaviour.gameObject);
-            }
+            foreach (GameObject enemyObject in ActiveGameObjectDatabase.GetActiveEnemyObjects())
+                Destroy(enemyObject);
 
             // Also check for enemy spawners that might emit an enemy
-            FoeSpawner[] spawners = FindObjectsOfType<FoeSpawner>();
-            for (int i = 0; i < spawners.Length; i++)
-                Destroy(spawners[i].gameObject);
+            foreach (GameObject spawnerObject in ActiveGameObjectDatabase.GetActiveFoeSpawnerObjects())
+                Destroy(spawnerObject);
         }
 
         /// <summary>
@@ -798,10 +792,8 @@ namespace DaggerfallWorkshop.Game
         /// </summary>
         public void MakeEnemiesHostile()
         {
-            DaggerfallEntityBehaviour[] entityBehaviours = FindObjectsOfType<DaggerfallEntityBehaviour>();
-            for (int i = 0; i < entityBehaviours.Length; i++)
-            {
-                DaggerfallEntityBehaviour entityBehaviour = entityBehaviours[i];
+            foreach (DaggerfallEntityBehaviour entityBehaviour in ActiveGameObjectDatabase.GetActiveEnemyBehaviours())
+            { 
                 if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
                 {
                     EnemyMotor enemyMotor = entityBehaviour.GetComponent<EnemyMotor>();
@@ -944,7 +936,7 @@ namespace DaggerfallWorkshop.Game
 
             // Game not active when top window is neither null or HUD
             IUserInterfaceWindow topWindow = DaggerfallUI.UIManager.TopWindow;
-            if (topWindow != null && !(topWindow is DaggerfallHUD))
+            if (topWindow != null && !(topWindow is DaggerfallHUD) && topWindow.PauseWhileOpen)
                 return false;
 
             return true;

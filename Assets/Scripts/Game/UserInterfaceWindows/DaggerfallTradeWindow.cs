@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -35,32 +35,32 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
 
         #region UI Rects
 
-        Rect costPanelRect = new Rect(49, 13, 111, 9);
+        protected Rect costPanelRect = new Rect(49, 13, 111, 9);
 
-        Rect actionButtonsPanelRect = new Rect(222, 10, 39, 190);
-        new Rect wagonButtonRect = new Rect(4, 4, 31, 14);
-        new Rect infoButtonRect = new Rect(4, 26, 31, 14);
-        Rect selectButtonRect = new Rect(4, 48, 31, 14);
-        Rect stealButtonRect = new Rect(4, 102, 31, 14);
-        Rect modeActionButtonRect = new Rect(4, 124, 31, 14);
-        Rect clearButtonRect = new Rect(4, 146, 31, 14);
+        protected Rect actionButtonsPanelRect = new Rect(222, 10, 39, 190);
+        protected new Rect wagonButtonRect = new Rect(4, 4, 31, 14);
+        protected new Rect infoButtonRect = new Rect(4, 26, 31, 14);
+        protected Rect selectButtonRect = new Rect(4, 48, 31, 14);
+        protected Rect stealButtonRect = new Rect(4, 102, 31, 14);
+        protected Rect modeActionButtonRect = new Rect(4, 124, 31, 14);
+        protected Rect clearButtonRect = new Rect(4, 146, 31, 14);
 
-        new Rect itemInfoPanelRect = new Rect(223, 87, 37, 32);
-        Rect itemBuyInfoPanelRect = new Rect(223, 76, 37, 32);
+        protected new Rect itemInfoPanelRect = new Rect(223, 87, 37, 32);
+        protected Rect itemBuyInfoPanelRect = new Rect(223, 76, 37, 32);
 
         #endregion
 
         #region UI Controls
 
-        Panel costPanel;
-        TextLabel costLabel;
-        TextLabel goldLabel;
+        protected Panel costPanel;
+        protected TextLabel costLabel;
+        protected TextLabel goldLabel;
 
-        Panel actionButtonsPanel;
-        Button selectButton;
-        Button stealButton;
-        Button modeActionButton;
-        Button clearButton;
+        protected Panel actionButtonsPanel;
+        protected Button selectButton;
+        protected Button stealButton;
+        protected Button modeActionButton;
+        protected Button clearButton;
 
         #endregion
 
@@ -1035,7 +1035,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 {
                     case WindowModes.Sell:
                     case WindowModes.SellMagic:
-                        float goldWeight = tradePrice * DaggerfallBankManager.goldUnitWeightInKg;
+                        float goldWeight = tradePrice * DaggerfallBankManager.goldPieceWeightInKg;
                         if (PlayerEntity.CarriedWeight + goldWeight <= PlayerEntity.MaxEncumbrance)
                         {
                             PlayerEntity.GoldPieces += tradePrice;
@@ -1102,26 +1102,32 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             int msgOffset = 0;
             int tradePrice = GetTradePrice();
 
+            if (cost >> 1 <= tradePrice)
+            {
+                if (cost - (cost >> 2) <= tradePrice)
+                    msgOffset = 2;
+                else
+                    msgOffset = 1;
+            }
+            if (WindowMode == WindowModes.Sell || WindowMode == WindowModes.SellMagic)
+                msgOffset += 3;
+
+            TextFile.Token[] tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(TradeMessageBaseId + msgOffset);
             if (WindowMode != WindowModes.Sell && WindowMode != WindowModes.SellMagic && PlayerEntity.GetGoldAmount() < tradePrice)
             {
-                DaggerfallUI.MessageBox(NotEnoughGoldId);
+                TextFile.Token[] notEnoughGoldTokens = DaggerfallUnity.Instance.TextProvider.GetRSCTokens(NotEnoughGoldId);
+                var combineTokens = new List<TextFile.Token>();
+                combineTokens.AddRange(tokens);
+                combineTokens.Add(new TextFile.Token(TextFile.Formatting.NewLineOffset, null));
+                combineTokens.AddRange(notEnoughGoldTokens);
+                combineTokens.Add(TextFile.CreateFormatToken(TextFile.Formatting.JustifyCenter));
+                DaggerfallUI.MessageBox(combineTokens.ToArray(), this);
             }
             else
             {
-                if (cost >> 1 <= tradePrice)
-                {
-                    if (cost - (cost >> 2) <= tradePrice)
-                        msgOffset = 2;
-                    else
-                        msgOffset = 1;
-                }
-                if (WindowMode == WindowModes.Sell || WindowMode == WindowModes.SellMagic)
-                    msgOffset += 3;
-
                 DaggerfallMessageBox messageBox = new DaggerfallMessageBox(uiManager, this);
-                TextFile.Token[] tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(TradeMessageBaseId + msgOffset);
                 messageBox.SetTextTokens(tokens, this);
-                messageBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes);
+                messageBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes, true);
                 messageBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
                 messageBox.OnButtonClick += ConfirmTrade_OnButtonClick;
                 uiManager.PushWindow(messageBox);

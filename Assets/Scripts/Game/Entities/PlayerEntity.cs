@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -181,7 +181,7 @@ namespace DaggerfallWorkshop.Game.Entity
         public int DarkBrotherhoodRequirementTally { get { return darkBrotherhoodRequirementTally; } set { darkBrotherhoodRequirementTally = value; } }
         public uint TimeToBecomeVampireOrWerebeast { get { return timeToBecomeVampireOrWerebeast; } set { timeToBecomeVampireOrWerebeast = value; } }
         public uint LastTimePlayerAteOrDrankAtTavern { get { return lastTimePlayerAteOrDrankAtTavern; } set { lastTimePlayerAteOrDrankAtTavern = value; } }
-        public float CarriedWeight { get { return Items.GetWeight() + (goldPieces * DaggerfallBankManager.goldUnitWeightInKg); } }
+        public float CarriedWeight { get { return Items.GetWeight() + (goldPieces * DaggerfallBankManager.goldPieceWeightInKg); } }
         public float WagonWeight { get { return WagonItems.GetWeight(); } }
         public RegionDataRecord[] RegionData { get { return regionData; } set { regionData = value; } }
         public uint LastGameMinutes { get { return lastGameMinutes; } set { lastGameMinutes = value; } }
@@ -983,6 +983,10 @@ namespace DaggerfallWorkshop.Game.Entity
                     Debug.LogErrorFormat("Failed to create effect bundle while importing classic spell '{0}'.", spell.ParsedData.spellName);
                     continue;
                 }
+
+                // Always use spell name from imported classic save as player might have custom names
+                bundle.Name = spell.ParsedData.spellName;
+
                 AddSpell(bundle);
             }
         }
@@ -1327,7 +1331,7 @@ namespace DaggerfallWorkshop.Game.Entity
                     DaggerfallUnityItem loc = items.GetItem(ItemGroups.MiscItems, (int)MiscItems.Letter_of_credit);
                     if (loc == null) {
                         break;
-                    } else if (amount <= loc.value) {
+                    } else if (amount < loc.value) {
                         loc.value -= amount;
                         amount = 0;
                     } else {
@@ -2346,6 +2350,22 @@ namespace DaggerfallWorkshop.Game.Entity
             bool suppressCrime = racialOverride != null && racialOverride.SuppressCrime;
 
             crimeCommitted = (!suppressCrime) ? crime : Crimes.None;
+
+            RaiseOnCrimeUpdateEvent(crimeCommitted);
+        }
+
+        // Allows modders to easily detect if a crime has been committed
+        // This will raise when the player's crime is set to None!
+        // Make sure to account for that when necessary.
+        public delegate void OnCrimeUpdateHandler(Crimes crime);
+        public event OnCrimeUpdateHandler OnCrimeUpdate;
+        protected void RaiseOnCrimeUpdateEvent(Crimes crime)
+        {
+            if (SaveLoadManager.Instance.LoadInProgress)
+                return;
+
+            if (OnCrimeUpdate != null)
+                OnCrimeUpdate(crime);
         }
 
         #endregion

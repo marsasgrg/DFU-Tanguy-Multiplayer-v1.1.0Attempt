@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -38,15 +38,15 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         const float maxZoom = 25.0f; // the minimum external automap camera height
         const float minZoom = 250.0f; // the maximum external automap camera height
         // button definitions
-        Button gridButton;
-        Button forwardButton;
-        Button backwardButton;
-        Button leftButton;
-        Button rightButton;
-        Button rotateLeftButton;
-        Button rotateRightButton;
-        Button upstairsButton;
-        Button downstairsButton;
+        protected Button gridButton;
+        protected Button forwardButton;
+        protected Button backwardButton;
+        protected Button leftButton;
+        protected Button rightButton;
+        protected Button rotateLeftButton;
+        protected Button rotateRightButton;
+        protected Button upstairsButton;
+        protected Button downstairsButton;
 
         // Handle toggle closing
         KeyCode automapBinding = KeyCode.None;

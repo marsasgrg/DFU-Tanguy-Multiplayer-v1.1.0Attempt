@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -16,6 +16,7 @@ using System;
 using System.Globalization;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DaggerfallWorkshop.Game;
 using IniParser;
 using IniParser.Model;
@@ -31,8 +32,46 @@ namespace DaggerfallWorkshop
     /// </summary>
     public class SettingsManager
     {
+        private static string GetFullPath(string basePath, string path)
+        {
+            if(string.IsNullOrEmpty(path) || Path.IsPathRooted(path))
+            {
+                return path;
+            }
+
+            return Path.GetFullPath(Path.Combine(basePath, path));
+        }
+
+        // Returns a relative path if embedded within the base path,
+        // returns the full path as is if outside the base path
+        private static string GetPortablePath(string basePath, string path)
+        {
+            if(string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            char lastChar = basePath.Last();
+            if (lastChar != Path.DirectorySeparatorChar && lastChar != Path.AltDirectorySeparatorChar)
+            {
+                basePath += Path.DirectorySeparatorChar;
+            }
+
+            Uri baseUri = new Uri(basePath);
+            Uri relUri = baseUri.MakeRelativeUri(new Uri(path));
+
+            string relativePath = Uri.UnescapeDataString(relUri.ToString()).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            if (relativePath.StartsWith(".." + Path.DirectorySeparatorChar))
+            {
+                return path;
+            }
+
+            return relativePath;
+        }
+
         const string defaultsIniName = "defaults.ini";
         const string settingsIniName = "settings.ini";
+        const string settingsBakExt = ".bak";
         const string settingsDistIniName = "settings-{0}.ini";
 
         const string sectionDaggerfall = "Daggerfall";
@@ -52,23 +91,14 @@ namespace DaggerfallWorkshop
         IniData defaultIniData = null;
         IniData userIniData = null;
 
-        string persistentPath = null;
         string distributionSuffix = null;
 
+        // Legacy way to get the persistent path. Better to just go through DaggerfallUnityApplication now
         public string PersistentDataPath
         {
             get
             {
-                if (string.IsNullOrEmpty(persistentPath))
-                {
-#if UNITY_EDITOR && SEPARATE_DEV_PERSISTENT_PATH
-                    persistentPath = String.Concat(Application.persistentDataPath, ".devenv");
-                    Directory.CreateDirectory(persistentPath);
-#else
-                    persistentPath = Application.persistentDataPath;
-#endif
-                }
-                return persistentPath;
+                return DaggerfallUnityApplication.PersistentDataPath;
             }
         }
 
@@ -239,6 +269,7 @@ namespace DaggerfallWorkshop
         public bool EnableQuestDebugger { get; set; }
         public int QuestRumorWeight { get; set; }
         public bool DisableEnemyDeathAlert { get; set; }
+        public bool HideLoginName { get; set; }
 
         // [Spells]
         public bool EnableSpellLighting { get; set; }
@@ -246,7 +277,7 @@ namespace DaggerfallWorkshop
 
         // [Controls]
         public bool InvertMouseVertical { get; set; }
-        public bool MouseLookSmoothing { get; set; }
+        public float MouseLookSmoothingFactor { get; set; }
         public float MouseLookSensitivity { get; set; }
         public float JoystickLookSensitivity { get; set; }
         public float JoystickCursorSensitivity { get; set; }
@@ -317,6 +348,27 @@ namespace DaggerfallWorkshop
 
         #region Public Methods
 
+        public static float[] GetMouseLookSmoothingFactors()
+        {
+            return new float[] { 0.0f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f };
+        }
+
+        public static int GetMouseLookSmoothingStrength(float factor)
+        {
+            float[] factors = GetMouseLookSmoothingFactors();
+
+            for (int i = 0; i < factors.Length; ++i)
+                if (factors[i] == factor)
+                    return i;
+
+            return 0;
+        }
+
+        public static float GetMouseLookSmoothingFactor(int index)
+        {
+            return GetMouseLookSmoothingFactors()[index];
+        }
+
         /// <summary>
         /// Load settings from settings.ini to live properties.
         /// </summary>
@@ -329,6 +381,24 @@ namespace DaggerfallWorkshop
             MyDaggerfallPath = GetString(sectionDaggerfall, "MyDaggerfallPath");
             MyDaggerfallUnitySavePath = GetString(sectionDaggerfall, "MyDaggerfallUnitySavePath");
             MyDaggerfallUnityScreenshotsPath = GetString(sectionDaggerfall, "MyDaggerfallUnityScreenshotsPath");
+
+            // In Portable Install mode, we save those paths as relative to the current directory
+            // This allows users to move the directory around without breaking the settings
+            if(DaggerfallUnityApplication.IsPortableInstall)
+            {
+                if(!string.IsNullOrEmpty(MyDaggerfallPath))
+                {
+                    MyDaggerfallPath = GetFullPath(AppDomain.CurrentDomain.BaseDirectory, MyDaggerfallPath);
+                }
+                if(!string.IsNullOrEmpty(MyDaggerfallUnitySavePath))
+                {
+                    MyDaggerfallUnitySavePath = GetFullPath(AppDomain.CurrentDomain.BaseDirectory, MyDaggerfallUnitySavePath);
+                }
+                if(!string.IsNullOrEmpty(MyDaggerfallUnityScreenshotsPath))
+                {
+                    MyDaggerfallUnityScreenshotsPath = GetFullPath(AppDomain.CurrentDomain.BaseDirectory, MyDaggerfallUnityScreenshotsPath);
+                }
+            }
 
             ResolutionWidth = GetInt(sectionVideo, "ResolutionWidth");
             ResolutionHeight = GetInt(sectionVideo, "ResolutionHeight");
@@ -438,13 +508,14 @@ namespace DaggerfallWorkshop
             EnableQuestDebugger = GetBool(sectionGUI, "EnableQuestDebugger");
             QuestRumorWeight = GetInt(sectionGUI, "QuestRumorWeight", 1, 100);
             DisableEnemyDeathAlert = GetBool(sectionGUI, "DisableEnemyDeathAlert");
+            HideLoginName = GetBool(sectionGUI, "HideLoginName");
 
             EnableSpellLighting = GetBool(sectionSpells, "EnableSpellLighting");
             EnableSpellShadows = GetBool(sectionSpells, "EnableSpellShadows");
 
             InvertMouseVertical = GetBool(sectionControls, "InvertMouseVertical");
-            MouseLookSmoothing = GetBool(sectionControls, "MouseLookSmoothing");
-            MouseLookSensitivity = GetFloat(sectionControls, "MouseLookSensitivity", 0.1f, 8.0f);
+            MouseLookSmoothingFactor = GetFloat(sectionControls, "MouseLookSmoothingFactor", 0.0f, 0.9f);
+            MouseLookSensitivity = GetFloat(sectionControls, "MouseLookSensitivity", 0.1f, 16.0f);
             JoystickLookSensitivity = GetFloat(sectionControls, "JoystickLookSensitivity", 0.1f, 4.0f);
             JoystickCursorSensitivity = GetFloat(sectionControls, "JoystickCursorSensitivity", 0.1f, 5.0f);
             JoystickMovementThreshold = GetFloat(sectionControls, "JoystickMovementThreshold", 0.0f, 1.0f);
@@ -512,9 +583,19 @@ namespace DaggerfallWorkshop
         public void SaveSettings()
         {
             // Write property cache to ini data
-            SetString(sectionDaggerfall, "MyDaggerfallPath", MyDaggerfallPath);
-            SetString(sectionDaggerfall, "MyDaggerfallUnitySavePath", MyDaggerfallUnitySavePath);
-            SetString(sectionDaggerfall, "MyDaggerfallUnityScreenshotsPath", MyDaggerfallUnityScreenshotsPath);
+            if (DaggerfallUnityApplication.IsPortableInstall)
+            {
+                // Save relative paths
+                SetString(sectionDaggerfall, "MyDaggerfallPath", GetPortablePath(AppDomain.CurrentDomain.BaseDirectory, MyDaggerfallPath));
+                SetString(sectionDaggerfall, "MyDaggerfallUnitySavePath", GetPortablePath(AppDomain.CurrentDomain.BaseDirectory, MyDaggerfallUnitySavePath));
+                SetString(sectionDaggerfall, "MyDaggerfallUnityScreenshotsPath", GetPortablePath(AppDomain.CurrentDomain.BaseDirectory,MyDaggerfallUnityScreenshotsPath));
+            }
+            else
+            {
+                SetString(sectionDaggerfall, "MyDaggerfallPath", MyDaggerfallPath);
+                SetString(sectionDaggerfall, "MyDaggerfallUnitySavePath", MyDaggerfallUnitySavePath);
+                SetString(sectionDaggerfall, "MyDaggerfallUnityScreenshotsPath", MyDaggerfallUnityScreenshotsPath);
+            }
 
             SetInt(sectionVideo, "ResolutionWidth", ResolutionWidth);
             SetInt(sectionVideo, "ResolutionHeight", ResolutionHeight);
@@ -625,12 +706,13 @@ namespace DaggerfallWorkshop
             SetBool(sectionGUI, "EnableQuestDebugger", EnableQuestDebugger);
             SetInt(sectionGUI, "QuestRumorWeight", QuestRumorWeight);
             SetBool(sectionGUI, "DisableEnemyDeathAlert", DisableEnemyDeathAlert);
+            SetBool(sectionGUI, "HideLoginName", HideLoginName);
 
             SetBool(sectionSpells, "EnableSpellLighting", EnableSpellLighting);
             SetBool(sectionSpells, "EnableSpellShadows", EnableSpellShadows);
 
             SetBool(sectionControls, "InvertMouseVertical", InvertMouseVertical);
-            SetBool(sectionControls, "MouseLookSmoothing", MouseLookSmoothing);
+            SetFloat(sectionControls, "MouseLookSmoothingFactor", MouseLookSmoothingFactor);
             SetFloat(sectionControls, "MouseLookSensitivity", MouseLookSensitivity);
             SetFloat(sectionControls, "JoystickLookSensitivity", JoystickLookSensitivity);
             SetFloat(sectionControls, "JoystickCursorSensitivity", JoystickCursorSensitivity);
@@ -651,6 +733,7 @@ namespace DaggerfallWorkshop
             SetBool(sectionControls, "AllowMagicRepairs", AllowMagicRepairs);
             SetBool(sectionControls, "BowDrawback", BowDrawback);
 
+            SetInt(sectionMap, "AutomapNumberOfDungeons", AutomapNumberOfDungeons);
             SetColor(sectionMap, "AutomapTempleColor", AutomapTempleColor);
             SetColor(sectionMap, "AutomapShopColor", AutomapShopColor);
             SetColor(sectionMap, "AutomapTavernColor", AutomapTavernColor);
@@ -694,17 +777,35 @@ namespace DaggerfallWorkshop
 
         #region Private Methods
 
-        string SettingsName()
+        string SettingsName(bool isBackup = false)
         {
+            string name;
             if (string.IsNullOrEmpty(DistributionSuffix))
-                return settingsIniName;
+                name = settingsIniName;
             else
-                return string.Format(settingsDistIniName, DistributionSuffix);
+                name = string.Format(settingsDistIniName, DistributionSuffix);
+
+            if (isBackup)
+                name = Path.ChangeExtension(name, settingsBakExt);
+
+            return name;
+        }
+
+        void CreateDefaultSettingsFile(string userIniPath)
+        {
+            // Load defaults.ini
+            TextAsset asset = Resources.Load<TextAsset>(defaultsIniName);
+
+            // Create file
+            File.WriteAllBytes(userIniPath, asset.bytes);
+
+            Debug.LogFormat("Creating new '{0}' at path '{1}'", SettingsName(), userIniPath);
         }
 
         void ReadSettingsFile()
         {
             // Load defaults.ini
+            // This is required for fallback sync if everything else goes wrong
             TextAsset asset = Resources.Load<TextAsset>(defaultsIniName);
             MemoryStream stream = new MemoryStream(asset.bytes);
             StreamReader reader = new StreamReader(stream);
@@ -712,42 +813,56 @@ namespace DaggerfallWorkshop
             reader.Close();
 
             // Must have settings.ini in persistent data path
-            string message;
             string userIniPath = Path.Combine(PersistentDataPath, SettingsName());
             if (!File.Exists(userIniPath))
+                CreateDefaultSettingsFile(userIniPath);
+
+            // Load settings.ini and try to handle exception
+            // Failing to load settings at this stage might cause game to freeze at startup
+            // First try backup from last good startup then fallback to defaults
+            try
             {
-                // Create file
-                message = string.Format("Creating new '{0}' at path '{1}'", SettingsName(), userIniPath);
-                File.WriteAllBytes(userIniPath, asset.bytes);
-                DaggerfallUnity.LogMessage(message);
+                userIniData = iniParser.ReadFile(userIniPath);
+            }
+            catch (Exception)
+            {
+                Debug.Log("Error parsing settings.ini. Trying backup file.");
+                string userIniBakPath = Path.Combine(PersistentDataPath, SettingsName(true));
+                try
+                {
+                    userIniData = iniParser.ReadFile(userIniBakPath);
+                }
+                catch(Exception)
+                {
+                    Debug.Log("Error parsing settings backup. Restoring defaults.");
+                    CreateDefaultSettingsFile(userIniPath);
+                    userIniData = iniParser.ReadFile(userIniPath);
+                }
             }
 
             // Log ini path in use
-            message = string.Format("Using '{0}' at path '{1}'", SettingsName(), userIniPath);
-            DaggerfallUnity.LogMessage(message);
+            Debug.LogFormat("Using '{0}' at path '{1}'", SettingsName(), userIniPath);
 
-            // Load settings.ini or set as read-only
-            userIniData = iniParser.ReadFile(userIniPath);
+            // Create a backup after successfully parsing ini data
+            WriteSettingsFile(true);
 
             // Ensure user ini data in sync with default ini data
             SyncIniData();
         }
 
-        void WriteSettingsFile()
+        void WriteSettingsFile(bool isBackup = false)
         {
+            string name = SettingsName(isBackup);
             if (iniParser != null)
             {
                 try
                 {
-                    string path = Path.Combine(PersistentDataPath, SettingsName());
-                    if (File.Exists(path))
-                    {
-                        iniParser.WriteFile(path, userIniData);
-                    }
+                    string path = Path.Combine(PersistentDataPath, name);
+                    iniParser.WriteFile(path, userIniData);
                 }
                 catch
                 {
-                    DaggerfallUnity.LogMessage("Failed to write settings.ini.");
+                    Debug.LogFormat("Failed to write {0}", name);
                 }
             }
         }

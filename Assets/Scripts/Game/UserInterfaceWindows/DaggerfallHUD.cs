@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -43,6 +43,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         HUDQuestDebugger questDebugger = new HUDQuestDebugger();
         HUDActiveSpells activeSpells = new HUDActiveSpells();
         HUDLarge largeHUD = new HUDLarge();
+        Panel debugPanel = null;
         bool renderHUD = true;
         bool startupComplete = false;
 
@@ -110,6 +111,30 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         public HUDActiveSpells ActiveSpells
         {
             get { return activeSpells; }
+        }
+
+        // Extra debug panel used by random systems. Only one active at a time
+        public Panel DebugPanel
+        {
+            get
+            {
+                return debugPanel;
+            }
+
+            set
+            {
+                if(debugPanel != null)
+                {
+                    ParentPanel.Components.Remove(debugPanel);
+                }
+
+                debugPanel = value;
+
+                if(debugPanel != null)
+                {
+                    ParentPanel.Components.Add(debugPanel);
+                }
+            }
         }
 
         public DaggerfallHUD(IUserInterfaceManager uiManager)

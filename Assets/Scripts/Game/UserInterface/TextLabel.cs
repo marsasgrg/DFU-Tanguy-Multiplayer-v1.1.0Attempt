@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -23,6 +23,8 @@ namespace DaggerfallWorkshop.Game.UserInterface
     public class TextLabel : BaseScreenComponent
     {
         #region Fields
+
+        const float totalWidthPadding = 1f;
 
         public const int limitMinTextureDim = 8; // the smallest possible value for minTextureDim (used to enforce minimum texture dimensions of 8x8 to avoid "degenerate image" error in Unity 5.2)
 
@@ -431,7 +433,7 @@ namespace DaggerfallWorkshop.Game.UserInterface
             for (int i = 0; i < codes.Length; i++)
             {
                 float glyphWidth = font.GetGlyphWidth(codes[i], LocalScale);
-                if (xpos + glyphWidth >= totalWidth)
+                if (xpos + glyphWidth > totalWidth + totalWidthPadding)
                     break;
 
                 GlyphLayoutData glyphPos = new GlyphLayoutData()
@@ -457,6 +459,9 @@ namespace DaggerfallWorkshop.Game.UserInterface
 
             // Start a new layout
             glyphLayout.Clear();
+
+            if (Parent != null)
+                _ = Rectangle; //Calling GetRectangle() to establish LocalScale; discarding return value
 
             // Set a local maxWidth that compensates for textScale
             int maxWidth = (int)(this.maxWidth / textScale);
@@ -612,7 +617,7 @@ namespace DaggerfallWorkshop.Game.UserInterface
                 for (int i = 0; i < row.Length; i++)
                 {
                     float glyphWidth = font.GetGlyphWidth(row[i], LocalScale);
-                    if (xpos + glyphWidth > totalWidth)
+                    if (xpos + glyphWidth > totalWidth + totalWidthPadding)
                         break;
 
                     if (row[i] == DaggerfallFont.SpaceCode)

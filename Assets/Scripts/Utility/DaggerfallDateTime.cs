@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -12,6 +12,7 @@
 using UnityEngine;
 using System;
 using System.Collections;
+using DaggerfallWorkshop.Game;
 
 namespace DaggerfallWorkshop.Utility
 {
@@ -412,7 +413,8 @@ namespace DaggerfallWorkshop.Utility
         /// </summary>
         public string MidDateTimeString()
         {
-            return string.Format("{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}", Hour, Minute, Second, Day + 1, MonthName, Year);
+            string midDateTimeFormatString = TextManager.Instance.GetLocalizedText("midDateTimeFormatString");
+            return string.Format(midDateTimeFormatString, Hour, Minute, Second, Day + 1, MonthName, Year);
         }
 
         /// <summary>
@@ -421,7 +423,8 @@ namespace DaggerfallWorkshop.Utility
         public string LongDateTimeString()
         {
             string suffix = GetSuffix(Day + 1);
-            return string.Format("{0:00}:{1:00}:{2:00} on {3}, {4}{5} of {6:00}, 3E{7}", Hour, Minute, Second, DayName, Day + 1, suffix, MonthName, Year);
+            string longDateTimeFormatString = TextManager.Instance.GetLocalizedText("longDateTimeFormatString");
+            return string.Format(longDateTimeFormatString, Hour, Minute, Second, DayName, Day + 1, suffix, MonthName, Year);
         }
 
         /// <summary>
@@ -430,7 +433,8 @@ namespace DaggerfallWorkshop.Utility
         public string DateTimeString()
         {
             string suffix = GetSuffix(Day + 1);
-            return string.Format("{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}", Hour, Minute, Second, Day + 1, suffix, MonthName, Year);
+            string dateTimeFormatString = TextManager.Instance.GetLocalizedText("dateTimeFormatString");
+            return string.Format(dateTimeFormatString, Hour, Minute, Second, Day + 1, suffix, MonthName, Year);
         }
 
         /// <summary>
@@ -439,7 +443,8 @@ namespace DaggerfallWorkshop.Utility
         public string DateString()
         {
             string suffix = GetSuffix(Day+1);
-            return string.Format("{0} the {1}{2} of {3:00}", DayName, Day + 1, suffix, MonthName);
+            string dateFormatString = TextManager.Instance.GetLocalizedText("dateFormatString");
+            return string.Format(dateFormatString, DayName, Day + 1, suffix, MonthName);
         }
 
 
@@ -574,7 +579,7 @@ namespace DaggerfallWorkshop.Utility
             int week = (int)(Day / DaysPerWeek);
             int day = (int)(Day - (week * DaysPerWeek));
 
-            return dayNames[day];
+            return TextManager.Instance.GetLocalizedTextList("dayNames")[day];
         }
 
         private string GetMonthName()
@@ -582,7 +587,7 @@ namespace DaggerfallWorkshop.Utility
             if (Month < 0 || Month >= MonthsPerYear)
                 RaiseTime(0);
 
-            return monthNames[(int)Month];
+            return TextManager.Instance.GetLocalizedTextList("monthNames")[Month];
         }
 
         private string GetBirthSignName()
@@ -590,7 +595,7 @@ namespace DaggerfallWorkshop.Utility
             if (Month < 0 || Month >= MonthsPerYear)
                 RaiseTime(0);
 
-            return birthSignNames[(int)Month];
+            return TextManager.Instance.GetLocalizedTextList("birthSignNames")[Month];
         }
 
         private Seasons GetSeasonValue()
@@ -630,7 +635,7 @@ namespace DaggerfallWorkshop.Utility
             if (Month < 0 || Month >= MonthsPerYear)
                 RaiseTime(0);
 
-            return seasonNames[(int)GetSeasonValue()];
+            return TextManager.Instance.GetLocalizedTextList("seasonNames")[(int)GetSeasonValue()];
         }
 
         private int GetMinuteOfDay()

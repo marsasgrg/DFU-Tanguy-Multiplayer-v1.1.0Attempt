@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -735,8 +735,9 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 DaggerfallUnityItem currentRightHandWeapon = player.ItemEquipTable.GetItem(EquipSlots.RightHand);
                 if (currentRightHandWeapon != null)
                 {
+                    string templateName = TextManager.Instance.GetLocalizedItemName(currentRightHandWeapon.ItemTemplate.index, currentRightHandWeapon.ItemTemplate.name);
                     string message = TextManager.Instance.GetLocalizedText("equippingWeapon");
-                    message = message.Replace("%s", currentRightHandWeapon.ItemTemplate.name);
+                    message = message.Replace("%s", templateName);
                     DaggerfallUI.Instance.PopupMessage(message);
                 }
             }
@@ -746,8 +747,9 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 DaggerfallUnityItem currentLeftHandWeapon = player.ItemEquipTable.GetItem(EquipSlots.LeftHand);
                 if (currentLeftHandWeapon != null)
                 {
+                    string templateName = TextManager.Instance.GetLocalizedItemName(currentLeftHandWeapon.ItemTemplate.index, currentLeftHandWeapon.ItemTemplate.name);
                     string message = TextManager.Instance.GetLocalizedText("equippingWeapon");
-                    message = message.Replace("%s", currentLeftHandWeapon.ItemTemplate.name);
+                    message = message.Replace("%s", templateName);
                     DaggerfallUI.Instance.PopupMessage(message);
                 }
             }
@@ -789,7 +791,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         protected virtual void SetRemoteItemsAnimation()
         {
             // Add animation handler for shop shelf stealing
-            if (shopShelfStealing)
+            if (shopShelfStealing && !usingWagon)
             {
                 remoteItemListScroller.BackgroundAnimationHandler = StealItemBackgroundAnimationHandler;
                 remoteItemListScroller.BackgroundAnimationDelay = coinsAnimationDelay;
@@ -1072,6 +1074,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             }
 
             usingWagon = show;
+            SetRemoteItemsAnimation();
             remoteItemListScroller.ResetScroll();
             Refresh(false);
         }
@@ -1098,13 +1101,13 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             const float proximityWagonAccessDistance = 5f;
 
             // Get all static doors
-            DaggerfallStaticDoors[] allDoors = GameObject.FindObjectsOfType<DaggerfallStaticDoors>();
-            if (allDoors != null && allDoors.Length > 0)
+            IEnumerable<DaggerfallStaticDoors> allRdbDoors = ActiveGameObjectDatabase.GetActiveRDBStaticDoors();
+            if (allRdbDoors != null && allRdbDoors.Count() > 0)
             {
                 Vector3 playerPos = GameManager.Instance.PlayerObject.transform.position;
                 // Find closest door to player
                 float closestDoorDistance = float.MaxValue;
-                foreach (DaggerfallStaticDoors doors in allDoors)
+                foreach (DaggerfallStaticDoors doors in allRdbDoors)
                 {
                     int doorIndex;
                     Vector3 doorPos;
@@ -1293,7 +1296,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             if (usingWagon)
             {
                 // Check wagon weight limit
-                int wagonCanHold = ComputeCanHoldAmount(playerGold, DaggerfallBankManager.goldUnitWeightInKg, ItemHelper.WagonKgLimit, remoteItems.GetWeight());
+                int wagonCanHold = ComputeCanHoldAmount(playerGold, DaggerfallBankManager.goldPieceWeightInKg, ItemHelper.WagonKgLimit, remoteItems.GetWeight());
                 if (goldToDrop > wagonCanHold)
                 {
                     goldToDrop = wagonCanHold;
@@ -1584,7 +1587,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 while (uiManager.TopWindow != this)
                     uiManager.PopWindow();
                 CloseWindow();
-                chooseOneCallback(item);
+                chooseOneCallback?.Invoke(item);
             }
         }
 
@@ -1657,6 +1660,10 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         // This will need more work as more usable items are available
         protected void UseItem(DaggerfallUnityItem item, ItemCollection collection = null)
         {
+            // Allow item to handle its own use.
+            if (item.UseItem(collection))
+                return;
+
             const int noSpellsTextId = 12;
 
             // Handle quest items on use clicks
@@ -1821,9 +1828,10 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 if (string.IsNullOrEmpty(revealedLocation.Name))
                     throw new Exception();
 
-                playerGPS.LocationRevealedByMapItem = revealedLocation.Name;
+                string localizedLocation = TextManager.Instance.GetLocalizedLocationName(revealedLocation.MapTableData.MapId, revealedLocation.Name);
+                playerGPS.LocationRevealedByMapItem = localizedLocation;
                 GameManager.Instance.PlayerEntity.Notebook.AddNote(
-                    TextManager.Instance.GetLocalizedText("readMap").Replace("%map", revealedLocation.Name));
+                    TextManager.Instance.GetLocalizedText("readMap").Replace("%map", localizedLocation));
 
                 DaggerfallMessageBox mapText = new DaggerfallMessageBox(uiManager, this);
                 mapText.SetTextTokens(DaggerfallUnity.Instance.TextProvider.GetRandomTokens(mapTextId));
@@ -1977,9 +1985,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             }
             else if (actionMode == ActionModes.Use)
             {
-                // Allow item to handle its own use, fall through to general use function if unhandled
-                if (!item.UseItem(localItems))
-                    UseItem(item, localItems);
+                UseItem(item, localItems);
                 Refresh(false);
             }
             else if (actionMode == ActionModes.Remove)
@@ -2041,9 +2047,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             }
             else if (actionMode == ActionModes.Use)
             {
-                // Allow item to handle its own use, fall through to general use function if unhandled
-                if (!item.UseItem(remoteItems))
-                    UseItem(item, remoteItems);
+                UseItem(item, remoteItems);
                 Refresh(false);
             }
             else if (actionMode == ActionModes.Remove)
@@ -2245,7 +2249,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         private void UpdateItemInfoPanelGold()
         {
             int gold = GameManager.Instance.PlayerEntity.GoldPieces;
-            float weight = gold * DaggerfallBankManager.goldUnitWeightInKg;
+            float weight = gold * DaggerfallBankManager.goldPieceWeightInKg;
             TextFile.Token[] tokens = {
                 TextFile.CreateTextToken(string.Format(goldAmount, gold)),
                 TextFile.NewLineToken,

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -273,7 +273,7 @@ namespace DaggerfallWorkshop
                         string regionText = "None";
                         if (region > 0)
                         {
-                            regionText = dfUnity.ContentReader.MapFileReader.GetRegionName(region);
+                            regionText = dfUnity.ContentReader.MapFileReader.GetRegionName(region); // Using non-localized name in save explorer editor
                         }
                         EditorGUILayout.LabelField(string.Format("Region: {0}", regionText));
 

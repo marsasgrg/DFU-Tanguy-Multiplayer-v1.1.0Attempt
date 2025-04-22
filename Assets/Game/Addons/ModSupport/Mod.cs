@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -514,7 +514,7 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport
         /// <returns>Localized string.</returns>
         public string Localize(string key)
         {
-            return TryLocalize(key) ?? string.Format(LocalizationSettings.StringDatabase.NoTranslationFoundMessage, key);
+            return TryLocalize(key) ?? string.Format("No translation found for key '{0}'.", key);
         }
 
         /// <summary>

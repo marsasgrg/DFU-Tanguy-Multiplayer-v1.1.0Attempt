@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -20,6 +20,7 @@ using DaggerfallWorkshop.Game.Utility;
 using DaggerfallConnect.Arena2;
 using FullSerializer;
 using DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects;
+using DaggerfallWorkshop.Game.Guilds;
 
 namespace DaggerfallWorkshop.Game.Questing
 {
@@ -311,11 +312,11 @@ namespace DaggerfallWorkshop.Game.Questing
                     break;
 
                 case MacroTypes.NameMacro3:             // town name
-                    textOut = (dialogPlace != null ? dialogPlace.SiteDetails.locationName : BLANK);
+                    textOut = (dialogPlace != null ? TextManager.Instance.GetLocalizedLocationName(dialogPlace.SiteDetails.mapId, dialogPlace.SiteDetails.locationName) : BLANK);
                     break;
 
                 case MacroTypes.NameMacro4:             // region name
-                    textOut = (dialogPlace != null ? dialogPlace.SiteDetails.regionName : BLANK);
+                    textOut = (dialogPlace != null ? TextManager.Instance.GetLocalizedRegionName(dialogPlace.SiteDetails.regionIndex) : BLANK);
                     break;
 
                 case MacroTypes.DetailsMacro:           // Details macro
@@ -980,9 +981,10 @@ namespace DaggerfallWorkshop.Game.Questing
                     return GetRandomFactionOfType(factionType);
 
                 // Type 10 Knightly_Guard does not exist in FACTION.TXT but IS used in some quests
-                // Redirecting this to "Generic Knightly Order" #844 to ensure NPC is created
+                // Redirecting this to a random knightly order to ensure NPC is created and faction is properly resolved
                 case FactionFile.FactionTypes.KnightlyGuard:
-                    return 844;
+                    var knightlyOrderIds = (int[])Enum.GetValues(typeof(KnightlyOrder.Orders));
+                    return knightlyOrderIds[UnityEngine.Random.Range(0, knightlyOrderIds.Length)];
 
                 // Type 11 Magic_User does not exist in FACTION.TXT and is not used in any quests
                 // Redirecting this to "Mages Guild" #40 to ensure NPC is created

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -123,6 +123,14 @@ namespace DaggerfallWorkshop.Game
             set { motor = value; }
         }
 
+        #endregion
+
+        #region Unity
+        private void Awake()
+        {
+            // Register this object as a Civilian Mobile NPC object
+            ActiveGameObjectDatabase.RegisterCivilianMobile(gameObject);
+        }
         #endregion
 
         #region Public Methods

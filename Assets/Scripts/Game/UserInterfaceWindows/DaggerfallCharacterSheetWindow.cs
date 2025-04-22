@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -50,18 +50,18 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
 
         #region UI Controls
 
-        PlayerEntity playerEntity;
-        TextLabel nameLabel = new TextLabel();
-        TextLabel raceLabel = new TextLabel();
-        TextLabel classLabel = new TextLabel();
-        TextLabel levelLabel = new TextLabel();
-        TextLabel goldLabel = new TextLabel();
-        TextLabel fatigueLabel = new TextLabel();
-        TextLabel healthLabel = new TextLabel();
-        TextLabel encumbranceLabel = new TextLabel();
-        Panel[] statPanels = new Panel[DaggerfallStats.Count];
-        TextLabel[] statLabels = new TextLabel[DaggerfallStats.Count];
-        PaperDoll characterPortrait = new PaperDoll(showArmorValues: false);
+        protected PlayerEntity playerEntity;
+        protected TextLabel nameLabel = new TextLabel();
+        protected TextLabel raceLabel = new TextLabel();
+        protected TextLabel classLabel = new TextLabel();
+        protected TextLabel levelLabel = new TextLabel();
+        protected TextLabel goldLabel = new TextLabel();
+        protected TextLabel fatigueLabel = new TextLabel();
+        protected TextLabel healthLabel = new TextLabel();
+        protected TextLabel encumbranceLabel = new TextLabel();
+        protected Panel[] statPanels = new Panel[DaggerfallStats.Count];
+        protected TextLabel[] statLabels = new TextLabel[DaggerfallStats.Count];
+        protected PaperDoll characterPortrait = new PaperDoll(showArmorValues: false);
 
         #endregion
 
@@ -311,7 +311,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 TextFile.Token HandToHandDamageToken = new TextFile.Token();
                 int minDamage = FormulaHelper.CalculateHandToHandMinDamage(playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.HandToHand));
                 int maxDamage = FormulaHelper.CalculateHandToHandMaxDamage(playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.HandToHand));
-                HandToHandDamageToken.text = DaggerfallUnity.Instance.TextProvider.GetSkillName(DFCareer.Skills.HandToHand) + " dmg: " + minDamage + "-" + maxDamage;
+                HandToHandDamageToken.text = string.Format(TextManager.Instance.GetLocalizedText("hthDamageFormatString"), DaggerfallUnity.Instance.TextProvider.GetSkillName(DFCareer.Skills.HandToHand), minDamage, maxDamage);
                 HandToHandDamageToken.formatting = TextFile.Formatting.Text;
                 tokens.Add(HandToHandDamageToken);
             }
@@ -348,10 +348,10 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
 
                 foreach (IGuild guild in guildMemberships)
                 {
+                    string affiliationText = string.Format(TextManager.Instance.GetLocalizedText("affiliationFormatString"), guild.GetTitle(), guild.GetReputation(playerEntity).ToString());
                     tokens.Add(TextFile.CreateTextToken(guild.GetAffiliation()));
                     tokens.Add(tab);
-                    tokens.Add(TextFile.CreateTextToken(guild.GetTitle() //)); DEBUG rep:
-                        + " (rep:" + guild.GetReputation(playerEntity).ToString() + ")"));
+                    tokens.Add(TextFile.CreateTextToken(affiliationText));
                     tokens.Add(TextFile.NewLineToken);
                 }
 

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -542,6 +542,9 @@ namespace DaggerfallWorkshop.Game.UserInterface
                 font = DaggerfallUI.DefaultFont;
 
             TextLabel textLabel = new TextLabel();
+
+            textLabel.Parent = this; //Establish parent early.
+
             if (UseRestrictedRenderArea)
             {
                 textLabel.RectRestrictedRenderArea = RectRestrictedRenderArea;
@@ -558,7 +561,6 @@ namespace DaggerfallWorkshop.Game.UserInterface
             textLabel.MaxCharacters = maxCharacters;
             textLabel.Text = text;
             textLabel.TextScale = textScale;
-            textLabel.Parent = this;
             textLabel.WrapText = wrapTextItems;
             textLabel.WrapWords = wrapWords;
 
@@ -582,6 +584,8 @@ namespace DaggerfallWorkshop.Game.UserInterface
                 return;
             }
 
+            textLabel.Parent = this; //Establish parent early.
+
             if (UseRestrictedRenderArea)
             {
                 textLabel.RectRestrictedRenderArea = RectRestrictedRenderArea;
@@ -592,7 +596,6 @@ namespace DaggerfallWorkshop.Game.UserInterface
                 textLabel.MaxWidth = (int)Size.x;
             else if (horizontalScrollMode == HorizontalScrollModes.PixelWise)
                 textLabel.MaxWidth = -1;
-            textLabel.Parent = this;
             textLabel.WrapText = wrapTextItems;
             textLabel.WrapWords = wrapWords;
 

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -127,7 +127,7 @@ namespace DaggerfallWorkshop.Utility
 
                 // Offset loaded enemies
                 // Not that many in DFU, but it happens in mods
-                foreach (EnemyMotor enemy in FindObjectsOfType<EnemyMotor>())
+                foreach (EnemyMotor enemy in ActiveGameObjectDatabase.GetActiveEnemyMotors())
                     enemy.AdjustLastGrounded(offset.y);
 
                 // Raise event

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -44,6 +44,7 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings
         const int startX                            = 10;
         const int startY                            = 15;
         const int columnWidth                       = 140;
+        const int columnHeight                      = 165;
         const int columnsOffset                     = columnWidth + startX * 2;
 
         const KeyCode nextPageKey                   = KeyCode.PageDown;
@@ -141,7 +142,7 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings
                 // Add warning label that some settings may not be applied while game is running
                 TextLabel warningLabel = new TextLabel(DaggerfallUI.DefaultFont);
                 warningLabel.Text = TextManager.Instance.GetLocalizedText("settingsNotApplied");
-                warningLabel.Position = new Vector2(0, columnHeight + 1);
+                warningLabel.Position = new Vector2(0, columnHeight + 12);
                 warningLabel.TextScale = 0.85f;
                 warningLabel.HorizontalAlignment = HorizontalAlignment.Center;
                 warningLabel.ShadowPosition = Vector2.zero;

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -392,6 +392,9 @@ namespace DaggerfallWorkshop.Game
                 pixelFontMaterial.EnableKeyword(KeyWords.MacOSX);
                 sdfFontMaterial.EnableKeyword(KeyWords.MacOSX);
             }
+
+            // Reset IME composition mode to default at startup
+            Input.imeCompositionMode = IMECompositionMode.Auto;
         }
 
         void Update()
@@ -452,9 +455,6 @@ namespace DaggerfallWorkshop.Game
 
                 if (Event.current.keyCode != KeyCode.None)
                     lastKeyCode = Event.current.keyCode;
-
-                if (lastCharacterTyped > 255)
-                    lastCharacterTyped = (char)0;
             }
 
             if (processHotkeys)
@@ -1115,7 +1115,7 @@ namespace DaggerfallWorkshop.Game
                 panel.Components.Add(slider);
 
             setIndicator(slider);
-            slider.IndicatorOffset = 15;
+            slider.IndicatorOffset = 2;
             slider.Indicator.TextScale = textScale;
             slider.Indicator.TextColor = Color.white;
             slider.Indicator.ShadowColor = Color.clear;

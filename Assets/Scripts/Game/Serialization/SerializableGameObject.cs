@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+// Copyright:       Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -235,6 +235,7 @@ namespace DaggerfallWorkshop.Game.Serialization
         public bool insideOpenShop;
         public bool insideTavern;
         public bool insideResidence;
+        public bool playerTeleportedIntoDungeon;
         public string terrainSamplerName;
         public int terrainSamplerVersion;
         public QuestSmallerDungeonsState smallerDungeonsState;
@@ -298,6 +299,7 @@ namespace DaggerfallWorkshop.Game.Serialization
         public ItemRepairData_v1 repairData;
         public uint timeForItemToDisappear;
         public uint timeHealthLeechLastUsed;
+        public int artifactIndexBitfield;
     }
 
     [fsObject("v1")]

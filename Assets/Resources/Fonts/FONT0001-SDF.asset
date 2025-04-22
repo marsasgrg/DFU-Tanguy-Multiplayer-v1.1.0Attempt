@@ -14,14 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hashCode: 1190758734
   material: {fileID: 21934885379483992}
-  materialHashCode: 282961582
+  materialHashCode: -1719473626
   m_Version: 1.1.0
   m_SourceFontFileGUID: 2b0aefcc333cee24c9dc48a7e63e7646
   m_SourceFontFile_EditorRef: {fileID: 0}
   m_SourceFontFile: {fileID: 0}
   m_AtlasPopulationMode: 0
   m_FaceInfo:
-    m_FaceIndex: 0
     m_FamilyName: Lohengrin
     m_StyleName: 
     m_PointSize: 104
@@ -29,7 +28,7 @@ MonoBehaviour:
     m_LineHeight: 63.75
     m_AscentLine: 81.625
     m_CapLine: 76.84375
-    m_MeanLine: 58.96875
+    m_MeanLine: 0
     m_Baseline: 0
     m_DescentLine: 22.375
     m_SuperscriptOffset: 81.625
@@ -3736,8 +3735,6 @@ MonoBehaviour:
   m_AtlasTextures:
   - {fileID: 28497999055549600}
   m_AtlasTextureIndex: 0
-  m_IsMultiAtlasTexturesEnabled: 0
-  m_ClearDynamicDataOnBuild: 0
   m_UsedGlyphRects: []
   m_FreeGlyphRects: []
   m_fontInfo:
@@ -5751,9 +5748,9 @@ Material:
     - _OutlineWidth: 0
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
-    - _ScaleRatioA: 0.8333333
-    - _ScaleRatioB: 0.6770833
-    - _ScaleRatioC: 0.6770833
+    - _ScaleRatioA: 1
+    - _ScaleRatioB: 1
+    - _ScaleRatioC: 1
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0
@@ -5804,7 +5801,6 @@ Texture2D:
   m_MipCount: 1
   m_IsReadable: 0
   m_IgnoreMasterTextureLimit: 0
-  m_IsPreProcessed: 0
   m_StreamingMipmaps: 0
   m_StreamingMipmapsPriority: 0
   m_AlphaIsTransparency: 0

@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -178,7 +178,10 @@ namespace DaggerfallWorkshop.Game.Guilds
                         return (IGuild)Activator.CreateInstance(guildType, new object[] { KnightlyOrder.GetOrder(variant) });
 
                     default:
-                        return (IGuild)Activator.CreateInstance(guildType);
+                        if (guildType.GetConstructor(new Type[] { typeof(int) }) != null)
+                            return (IGuild)Activator.CreateInstance(guildType, new object[] { variant });
+                        else
+                            return (IGuild)Activator.CreateInstance(guildType);
                 }
             }
             else

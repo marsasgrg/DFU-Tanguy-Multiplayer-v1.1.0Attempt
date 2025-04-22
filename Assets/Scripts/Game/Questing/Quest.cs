@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -18,6 +18,7 @@ using DaggerfallConnect.Arena2;
 using DaggerfallWorkshop.Game.Items;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using FullSerializer;
+using DaggerfallWorkshop.Localization;
 
 namespace DaggerfallWorkshop.Game.Questing
 {
@@ -480,8 +481,7 @@ namespace DaggerfallWorkshop.Game.Questing
             // Dynamically relink individual NPC and associated QuestResourceBehaviour (if any) in current scene
             if (person.IsIndividualNPC)
             {
-                QuestResourceBehaviour[] behaviours = GameObject.FindObjectsOfType<QuestResourceBehaviour>();
-                foreach (var questResourceBehaviour in behaviours)
+                foreach (QuestResourceBehaviour questResourceBehaviour in ActiveGameObjectDatabase.GetActiveStaticNPCQuestResourceBehaviours())
                 {
                     // Get StaticNPC if present
                     StaticNPC npc = questResourceBehaviour.GetComponent<StaticNPC>();
@@ -665,10 +665,23 @@ namespace DaggerfallWorkshop.Game.Questing
 
         public Message GetMessage(int messageID)
         {
+            // Get default message resource
+            Message result = null;
             if (messages.ContainsKey(messageID))
-                return messages[messageID];
+                result = messages[messageID];
             else
                 return null;
+
+            // Attempt to get localized text for message
+            string localizedString;
+            string key = string.Format("{0}.{1}", QuestName, messageID.ToString());
+            if (TextManager.Instance.TryGetLocalizedText(TextCollections.TextQuests, key, out localizedString))
+            {
+                string[] lines = localizedString.Split('\n');
+                result.ReplaceMessage(messageID, lines);
+            }
+
+            return result;
         }
 
         public Task GetTask(Symbol symbol)
@@ -992,6 +1005,9 @@ namespace DaggerfallWorkshop.Game.Questing
                 message.RestoreSaveData(messageData);
                 messages.Add(message.ID, message);
             }
+
+            // Restore localized messages
+            QuestMachine.Instance.RestoreLocalizedQuestMessages(questName);
 
             // Restore resources
             resources.Clear();

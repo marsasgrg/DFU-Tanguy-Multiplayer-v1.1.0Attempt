@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -15,15 +15,13 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
-using DaggerfallWorkshop;
 using DaggerfallWorkshop.Utility;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
-using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using FullSerializer;
 using DaggerfallWorkshop.Game.Banking;
+using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Guilds;
-using DaggerfallWorkshop.Game.Serialization;
 
 namespace DaggerfallWorkshop.Game.Questing
 {
@@ -260,15 +258,28 @@ namespace DaggerfallWorkshop.Game.Questing
                     break;
 
                 case MacroTypes.NameMacro2:             // Name of location/dungeon (e.g. Gothway Garden)
-                    textOut = siteDetails.locationName;
+                    textOut = TextManager.Instance.GetLocalizedLocationName(siteDetails.mapId, siteDetails.locationName);
                     break;
 
                 case MacroTypes.NameMacro3:             // Name of dungeon (e.g. Privateer's Hold) - Not sure about this one, need to test
-                    textOut = siteDetails.locationName;
+                    textOut = TextManager.Instance.GetLocalizedLocationName(siteDetails.mapId, siteDetails.locationName);
                     break;
 
                 case MacroTypes.NameMacro4:             // Name of region (e.g. Tigonus)
-                    textOut = siteDetails.regionName;
+                    if (siteDetails.regionIndex == 0 && siteDetails.regionName != "Alik'r Desert")
+                    {
+                        // Workaround for older saves where regionIndex was not present and will always be 0 in save data (Alik'r Desert)
+                        // This can result in improper region name being displayed when loading an older save and quest not actually set in Alik'r Desert.
+                        // In these cases display name using the legacy regionName field stored in place data
+                        var index =
+                            DaggerfallUnity.Instance.ContentReader.MapFileReader.GetRegionIndex(siteDetails.regionName);
+                        textOut = TextManager.Instance.GetLocalizedRegionName(index);
+                    }
+                    else
+                    {
+                        // Return localized region name based on regionIndex
+                        textOut = TextManager.Instance.GetLocalizedRegionName(siteDetails.regionIndex);
+                    }
                     break;
 
                 default:                                // Macro not supported
@@ -325,6 +336,7 @@ namespace DaggerfallWorkshop.Game.Questing
             siteDetails.siteType = siteType;
             siteDetails.mapId = location.MapTableData.MapId;
             siteDetails.locationId = location.Exterior.ExteriorData.LocationId;
+            siteDetails.regionIndex = location.RegionIndex;
             siteDetails.buildingKey = buildingKey;
             siteDetails.buildingName = buildingName;
             siteDetails.regionName = location.RegionName;
@@ -657,6 +669,25 @@ namespace DaggerfallWorkshop.Game.Questing
             }
         }
 
+        /// For dungeon types check StreamingAssets\Tables\Quests-Places.txt
+        public static bool IsPlayerAtDungeonType(int p2)
+        {
+            // Get component handling player world status and transitions
+            PlayerEnterExit playerEnterExit = GameManager.Instance.PlayerEnterExit;
+            if (!playerEnterExit)
+                return false;
+
+            // Only dungeons
+            if (!playerEnterExit.IsPlayerInsideDungeon)
+                return false;
+
+            // Any dungeon will do
+            if (p2 == -1)
+                return true;
+
+            return p2 == (int)GameManager.Instance.PlayerEnterExit.Dungeon.Summary.DungeonType;
+        }
+
         #endregion
 
         #region Local Site Methods
@@ -893,6 +924,7 @@ namespace DaggerfallWorkshop.Game.Questing
             siteDetails.siteType = SiteTypes.Dungeon;
             siteDetails.mapId = location.MapTableData.MapId;
             siteDetails.locationId = location.Exterior.ExteriorData.LocationId;
+            siteDetails.regionIndex = location.RegionIndex;
             siteDetails.regionName = location.RegionName;
             siteDetails.locationName = location.Name;
             siteDetails.questSpawnMarkers = questSpawnMarkers;
@@ -939,6 +971,7 @@ namespace DaggerfallWorkshop.Game.Questing
             siteDetails.siteType = SiteTypes.Town;
             siteDetails.mapId = location.MapTableData.MapId;
             siteDetails.locationId = location.Exterior.ExteriorData.LocationId;
+            siteDetails.regionIndex = location.RegionIndex;
             siteDetails.regionName = location.RegionName;
             siteDetails.locationName = location.Name;
             siteDetails.questSpawnMarkers = null;
@@ -1059,6 +1092,7 @@ namespace DaggerfallWorkshop.Game.Questing
             siteDetails.siteType = siteType;
             siteDetails.mapId = location.MapTableData.MapId;
             siteDetails.locationId = location.Exterior.ExteriorData.LocationId;
+            siteDetails.regionIndex = location.RegionIndex;
             siteDetails.regionName = location.RegionName;
             siteDetails.locationName = location.Name;
             siteDetails.buildingKey = buildingKey;
@@ -1195,6 +1229,7 @@ namespace DaggerfallWorkshop.Game.Questing
                             site.siteType = SiteTypes.Building;
                             site.mapId = location.MapTableData.MapId;
                             site.locationId = location.Exterior.ExteriorData.LocationId;
+                            site.regionIndex = location.RegionIndex;
                             site.regionName = location.RegionName;
                             site.locationName = location.Name;
                             site.buildingKey = buildingSummary[i].buildingKey;
@@ -1266,8 +1301,13 @@ namespace DaggerfallWorkshop.Game.Questing
             if (RMBLayout.IsResidence(buildingType))
             {
                 // Generate a random surname for this residence
-                //DFRandom.srand(Time.renderedFrameCount);
-                string surname = DaggerfallUnity.Instance.NameHelper.Surname(Utility.NameHelper.BankTypes.Breton);
+                string surname = DaggerfallUnity.Instance.NameHelper.Surname(MapsFile.GetNameBankOfRegion(location.RegionIndex));
+                if (string.IsNullOrEmpty(surname))
+                {
+                    // Redguards have just a single name
+                    surname = DaggerfallUnity.Instance.NameHelper.FirstName(MapsFile.GetNameBankOfRegion(location.RegionIndex), (Genders)UnityEngine.Random.Range(0, 1));
+                }
+
                 buildingName = TextManager.Instance.GetLocalizedText("theNamedResidence").Replace("%s", surname);
             }
             else
@@ -1277,8 +1317,8 @@ namespace DaggerfallWorkshop.Game.Questing
                     buildingSummary[buildingIndex].NameSeed,
                     buildingSummary[buildingIndex].BuildingType,
                     buildingSummary[buildingIndex].FactionId,
-                    location.Name,
-                    location.RegionName);
+                    TextManager.Instance.GetLocalizedLocationName(location.MapTableData.MapId, location.Name),
+                    TextManager.Instance.GetLocalizedRegionName(location.RegionIndex));
             }
 
             return buildingName;

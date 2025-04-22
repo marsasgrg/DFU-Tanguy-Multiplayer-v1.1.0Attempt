@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -57,7 +57,12 @@ namespace DaggerfallWorkshop
         public ItemCollection Items
         {
             get { return items; }
-			set { items = value;}
+        }
+
+        public void Awake()
+        {
+            // Register as Loot object
+            ActiveGameObjectDatabase.RegisterLoot(gameObject);
         }
 
         public static int CreateStockedDate(DaggerfallDateTime date)
@@ -248,6 +253,10 @@ namespace DaggerfallWorkshop
                         }
                         // Add any modded items registered in applicable groups
                         int[] customItemTemplates = itemHelper.GetCustomItemsForGroup(itemGroup);
+                        // Ensure there's a (21-rarity)% chance for a custom transportation item to be generated
+                        if (chanceMod == 0 && itemGroup == ItemGroups.Transportation)
+                            chanceMod = 20;
+
                         for (int j = 0; j < customItemTemplates.Length; j++)
                         {
                             ItemTemplate itemTemplate = itemHelper.GetItemTemplate(itemGroup, customItemTemplates[j]);

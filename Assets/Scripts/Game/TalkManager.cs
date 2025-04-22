@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -1506,12 +1506,12 @@ namespace DaggerfallWorkshop.Game
                     PlayerGPS.DiscoveredBuilding discoveredBuilding;
                     if (GameManager.Instance.PlayerGPS.GetAnyBuilding(GameManager.Instance.PlayerEnterExit.ExteriorDoors[0].buildingKey, out discoveredBuilding))
                     {
-                        return String.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), discoveredBuilding.displayName, GameManager.Instance.PlayerGPS.CurrentLocation.Name);
+                        return String.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), discoveredBuilding.displayName, GameManager.Instance.PlayerGPS.CurrentLocalizedLocationName);
                     }
                     // Fallback if no discovery info was found
                     BuildingInfo currentBuilding = listBuildings.Find(x => x.buildingKey == GameManager.Instance.PlayerEnterExit.ExteriorDoors[0].buildingKey);
 
-                    return string.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), currentBuilding.name, GameManager.Instance.PlayerGPS.CurrentLocation.Name);
+                    return string.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), currentBuilding.name, GameManager.Instance.PlayerGPS.CurrentLocalizedLocationName);
                 }
 
                 if (GameManager.Instance.IsPlayerInsideCastle || GameManager.Instance.IsPlayerInsideDungeon) // In dungeon
@@ -1522,7 +1522,7 @@ namespace DaggerfallWorkshop.Game
             }
             else
             {
-                return string.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), GameManager.Instance.PlayerGPS.CurrentLocation.Name, GameManager.Instance.PlayerGPS.CurrentRegionName);
+                return string.Format(TextManager.Instance.GetLocalizedText("AnswerTextWhereAmI"), GameManager.Instance.PlayerGPS.CurrentLocalizedLocationName, GameManager.Instance.PlayerGPS.CurrentLocalizedRegionName);
             }
             return TextManager.Instance.GetLocalizedText("resolvingError");
         }
@@ -1859,7 +1859,7 @@ namespace DaggerfallWorkshop.Game
             DFLocation location = new DFLocation();
             if (GetLocationWithRegionalBuilding(lookUpIndexes[listItem.index], FactionsAndBuildings[listItem.index], ref location))
             {
-                LocationOfRegionalBuilding = location.Name;
+                LocationOfRegionalBuilding = TextManager.Instance.GetLocalizedLocationName(location.MapTableData.MapId, location.Name);
                 return true;
             }
 
@@ -2759,7 +2759,12 @@ namespace DaggerfallWorkshop.Game
                         {
                             BuildingInfo item;
                             item.buildingType = buildingSummary.BuildingType;
-                            item.name = BuildingNames.GetName(buildingSummary.NameSeed, buildingSummary.BuildingType, buildingSummary.FactionId, location.Name, location.RegionName);
+                            item.name = BuildingNames.GetName(
+                                buildingSummary.NameSeed,
+                                buildingSummary.BuildingType,
+                                buildingSummary.FactionId,
+                                TextManager.Instance.GetLocalizedLocationName(location.MapTableData.MapId, location.Name),
+                                TextManager.Instance.GetLocalizedRegionName(location.RegionIndex));
                             item.buildingKey = buildingSummary.buildingKey;
                             // Compute building position in map coordinate system
                             float xPosBuilding = blockLayout[index].rect.xpos + (int)(buildingSummary.Position.x / (BlocksFile.RMBDimension * MeshReader.GlobalScale) * ExteriorAutomap.blockSizeWidth) - GameManager.Instance.ExteriorAutomap.LocationWidth * ExteriorAutomap.blockSizeWidth * 0.5f;
@@ -2823,7 +2828,12 @@ namespace DaggerfallWorkshop.Game
                                         {
                                             npc = npcData2,
                                             socialGroup = socialGroup,
-                                            buildingName = BuildingNames.GetName(buildingSummary.NameSeed, buildingSummary.BuildingType, buildingSummary.FactionId, location.Name, location.RegionName)
+                                            buildingName = BuildingNames.GetName(
+                                                buildingSummary.NameSeed,
+                                                buildingSummary.BuildingType,
+                                                buildingSummary.FactionId,
+                                                TextManager.Instance.GetLocalizedLocationName(location.MapTableData.MapId, location.Name),
+                                                TextManager.Instance.GetLocalizedRegionName(location.RegionIndex))
                                         };
 
                                         if (!RMBLayout.IsNamedBuilding(buildingSummary.BuildingType))
@@ -3526,7 +3536,7 @@ namespace DaggerfallWorkshop.Game
             return TokensToString(tokens);
         }
 
-        private string TokensToString(TextFile.Token[] tokens, bool addSpaceAtTokenEnd = true)
+        public static string TokensToString(TextFile.Token[] tokens, bool addSpaceAtTokenEnd = true)
         {
             // Create return string from expanded tokens
             string separatorString = " ";
@@ -3609,6 +3619,7 @@ namespace DaggerfallWorkshop.Game
                     ConsoleCommandsDatabase.RegisterCommand(TalkNpcsKnowEverything.name, TalkNpcsKnowEverything.description, TalkNpcsKnowEverything.usage, TalkNpcsKnowEverything.Execute);
                     ConsoleCommandsDatabase.RegisterCommand(TalkNpcsKnowUsual.name, TalkNpcsKnowUsual.description, TalkNpcsKnowUsual.usage, TalkNpcsKnowUsual.Execute);
                     ConsoleCommandsDatabase.RegisterCommand(TalkNpcBehaviorOverride.name, TalkNpcBehaviorOverride.description, TalkNpcBehaviorOverride.usage, TalkNpcBehaviorOverride.Execute);
+                    ConsoleCommandsDatabase.RegisterCommand(TalkPrint.name, TalkPrint.description, TalkPrint.usage, TalkPrint.Execute);
                 }
                 catch (System.Exception ex)
                 {
@@ -3662,6 +3673,38 @@ namespace DaggerfallWorkshop.Game
                     }
 
                     return String.Format("NPC behaviors: " + GameManager.Instance.TalkManager.consoleCommand_NPCBehaviorOverride.ToString());
+                }
+            }
+
+            private static class TalkPrint
+            {
+                public static readonly string name = "talk_print";
+                public static readonly string description = "Output talk text from the RSC string database. ID must be a talk-related string. Record is selected at random.";
+                public static readonly string usage = "talk_print {id}";
+
+                public static string Execute(params string[] args)
+                {
+                    if (args == null || args.Length < 1)
+                        return usage;
+
+                    int id;
+                    if (!int.TryParse(args[0], out id))
+                        return usage;
+
+                    string output = "Nothing found.";
+                    try
+                    {
+                        TextFile.Token[] tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(id);
+                        MacroHelper.ExpandMacros(ref tokens, GameManager.Instance.TalkManager);
+                        output = TokensToString(tokens);
+                    }
+                    catch (Exception ex)
+                    {
+                        output = string.Format("Command failed. ID {0} is not a talk string.", id);
+                        Debug.LogFormat("talk_print exception: {0}", ex.Message);
+                    }
+
+                    return output;
                 }
             }
         }

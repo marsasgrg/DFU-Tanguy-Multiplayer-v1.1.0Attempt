@@ -1,5 +1,5 @@
 // Project:         Daggerfall Unity
-// Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
+Copyright (C) 2009-2023 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
@@ -67,6 +67,8 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
         protected bool displayMostRecentChar;
         protected bool loading = false;
         protected int loadingCountdown = 2;
+
+        IMECompositionMode prevIME;
 
         #endregion
 
@@ -217,13 +219,8 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             screenshotPanel.Components.Add(saveFolderLabel);
 
             // Allow clicking folder label to open save folder
-            // Currently for Windows and Mac only
-            if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.Windows ||
-                SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX)
-            {
-                saveFolderLabel.MouseOverBackgroundColor = Color.blue;
-                saveFolderLabel.OnMouseClick += SaveFolderLabel_OnMouseClick;
-            }
+            saveFolderLabel.MouseOverBackgroundColor = Color.blue;
+            saveFolderLabel.OnMouseClick += SaveFolderLabel_OnMouseClick;
 
             // Time labels
             saveTimeLabel.ShadowPosition = Vector2.zero;
@@ -293,6 +290,18 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             // Autoselect save at top of list
             if (mode == Modes.LoadGame && savesList.Count > 0)
                 savesList.SelectIndex(0);
+
+            // Enable IME composition during input
+            prevIME = Input.imeCompositionMode;
+            Input.imeCompositionMode = IMECompositionMode.On;
+        }
+
+        public override void OnPop()
+        {
+            base.OnPop();
+
+            // Restore previous IME composition mode
+            Input.imeCompositionMode = prevIME;
         }
 
         public override void Update()
@@ -357,7 +366,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 promptText = TextManager.Instance.GetLocalizedText("savePrompt");
             else if (mode == Modes.LoadGame)
                 promptText = TextManager.Instance.GetLocalizedText("loadPrompt");
-            promptLabel.Text = string.Format("{0} for '{1}'", promptText, currentPlayerName);
+            promptLabel.Text = string.Format(TextManager.Instance.GetLocalizedText("saveLoadPromptFormat"), promptText, currentPlayerName);
         }
 
         protected virtual void UpdateSelectedSaveInfo()

@@ -1,6 +1,7 @@
 ---
 name: Issue Template
 about: Create an issue report to help improve Daggerfall Unity
+about: READ THIS FIRST
 title: ''
 labels: ''
 assignees: ''
