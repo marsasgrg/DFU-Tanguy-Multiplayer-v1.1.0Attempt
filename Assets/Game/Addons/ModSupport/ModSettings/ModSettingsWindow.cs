@@ -64,7 +64,6 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings
         readonly Mod mod;
         readonly ModSettingsData settings;
         readonly bool liveChange;
-        readonly int columnHeight;
 
         int x = startX;
         int y = startY;
@@ -106,7 +105,7 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings
             this.liveChange = liveChange;
 
             // Make room for warning label about applying settings during runtime
-            columnHeight = liveChange ? 155 : 165;
+            //columnHeight = liveChange ? 155 : 165;
 
             settings = ModSettingsData.Make(mod);
             settings.SaveDefaults();

@@ -57,6 +57,7 @@ namespace DaggerfallWorkshop
         public ItemCollection Items
         {
             get { return items; }
+            set {  items = value; }
         }
 
         public void Awake()
